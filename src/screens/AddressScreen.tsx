@@ -9,23 +9,29 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { useAddress } from '../hooks/useAddress';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Address {
   id: string;
   user_id: string;
   address_line1: string;
-  address_line2?: string;
+  address_line2?: string; //optional
   city: string;
   state: string;
   postal_code: string;
   is_default: boolean;
 }
 
-export function AddressScreen({ navigation }: { navigation: any }) {
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [loading, setLoading] = useState(true);
+export function AddressScreen() {
+  const {
+    addresses,
+    loading,
+    fetchAddresses,
+    addAddress,
+    setDefaultAddress,
+    deleteAddress,
+  } = useAddress();
   const [addingAddress, setAddingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState<Partial<Address>>({});
 
@@ -33,89 +39,15 @@ export function AddressScreen({ navigation }: { navigation: any }) {
     fetchAddresses();
   }, []);
 
-  const fetchAddresses = async () => {
+  const handleAddAddress = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
-      const { data, error } = await supabase
-        .from('addresses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('is_default', { ascending: false });
-
-      if (error) throw error;
-      setAddresses(data || []);
-    } catch (error) {
-      console.error('Error fetching addresses:', error);
-      Alert.alert('Error', 'Failed to load addresses');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addAddress = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
-      const { data, error } = await supabase
-        .from('addresses')
-        .insert([{ ...newAddress, user_id: user.id }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setAddresses([...addresses, data]);
+      await addAddress(newAddress);
       setAddingAddress(false);
       setNewAddress({});
       Alert.alert('Success', 'Address added successfully');
     } catch (error) {
       console.error('Error adding address:', error);
       Alert.alert('Error', 'Failed to add address');
-    }
-  };
-
-  const setDefaultAddress = async (addressId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
-      await supabase
-        .from('addresses')
-        .update({ is_default: false })
-        .eq('user_id', user.id);
-
-      const { error } = await supabase
-        .from('addresses')
-        .update({ is_default: true })
-        .eq('id', addressId);
-
-      if (error) throw error;
-
-      await fetchAddresses();
-      Alert.alert('Success', 'Default address updated');
-    } catch (error) {
-      console.error('Error setting default address:', error);
-      Alert.alert('Error', 'Failed to set default address');
-    }
-  };
-
-  const deleteAddress = async (addressId: string) => {
-    try {
-      const { error } = await supabase
-        .from('addresses')
-        .delete()
-        .eq('id', addressId);
-
-      if (error) throw error;
-
-      setAddresses(addresses.filter(addr => addr.id !== addressId));
-      Alert.alert('Success', 'Address deleted successfully');
-    } catch (error) {
-      console.error('Error deleting address:', error);
-      Alert.alert('Error', 'Failed to delete address');
     }
   };
 
@@ -169,7 +101,7 @@ export function AddressScreen({ navigation }: { navigation: any }) {
             placeholder="Postal Code"
             keyboardType="numeric"
           />
-          <TouchableOpacity style={styles.button} onPress={addAddress}>
+          <TouchableOpacity style={styles.button} onPress={handleAddAddress}>
             <Text style={styles.buttonText}>Add Address</Text>
           </TouchableOpacity>
         </View>
@@ -210,6 +142,7 @@ export function AddressScreen({ navigation }: { navigation: any }) {
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
