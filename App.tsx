@@ -17,6 +17,8 @@ import { SignUpScreen } from './src/screens/SignUpScreen';
 import { RestaurantListScreen } from './src/screens/RestaurantListScreen';
 import { RestaurantDetailsScreen } from './src/screens/RestaurantDetailsScreen';
 import { CartScreen } from './src/screens/CartScreen';
+import { EditProfileScreen } from './src/screens/EditUserProfile';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -119,6 +121,17 @@ function NavigationContent() {
               title: route.params?.restaurant?.name || 'Restaurant Details',
               headerBackTitle: 'Back',
             })}
+          />
+            <Stack.Screen 
+            name="EditProfile" 
+            component={EditProfileScreen}
+            options={{ 
+              title: 'EditProfile',
+              headerStyle: {
+                backgroundColor: '#FF6B6B',
+              },
+              headerTintColor: '#fff',
+            }}
           />
           <Stack.Screen
             name="Cart"

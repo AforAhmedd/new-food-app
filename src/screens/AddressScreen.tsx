@@ -16,7 +16,7 @@ interface Address {
   id: string;
   user_id: string;
   address_line1: string;
-  address_line2?: string; //optional
+  address_line2?: string; //optional address
   city: string;
   state: string;
   postal_code: string;
