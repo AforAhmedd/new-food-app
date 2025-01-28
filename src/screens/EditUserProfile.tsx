@@ -13,10 +13,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
 interface UserProfile {
   id: string;
-  email: string;
   full_name: string;
   phone_number: string;
   avatar_url?: string;
@@ -27,6 +27,7 @@ export function EditProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -50,12 +51,90 @@ export function EditProfileScreen() {
       setProfile(data);
       setFullName(data.full_name || '');
       setPhoneNumber(data.phone_number || '');
+      setAvatarUri(data.avatar_url || null);
     } catch (error) {
       console.error('Error fetching profile:', error);
       Alert.alert('Error', 'Failed to load profile information');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUploadImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.status !== 'granted') {
+        Alert.alert('Permission Denied', 'Permission to access media library is required.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const imageUri = result.assets[0].uri;
+        setAvatarUri(imageUri);
+
+        // Upload image to Supabase or handle it here
+        console.log('Image selected from library:', imageUri);
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      Alert.alert('Error', 'Failed to upload image');
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (permissionResult.status !== 'granted') {
+        Alert.alert('Permission Denied', 'Permission to access the camera is required.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const photoUri = result.assets[0].uri;
+        setAvatarUri(photoUri);
+
+        // Upload photo to Supabase or handle it here
+        console.log('Photo taken:', photoUri);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo');
+    }
+  };
+
+  const handleProfilePicPress = () => {
+    Alert.alert(
+      'Profile Picture',
+      'Choose an option',
+      [
+        {
+          text: 'Take Photo',
+          onPress: handleTakePhoto,
+        },
+        {
+          text: 'Choose from Library',
+          onPress: handleUploadImage,
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const handleUpdateProfile = async () => {
@@ -68,6 +147,7 @@ export function EditProfileScreen() {
         id: user.id,
         full_name: fullName,
         phone_number: phoneNumber,
+        avatar_url: avatarUri, // Update avatar URL in the profile
         updated_at: new Date().toISOString(),
       };
 
@@ -77,6 +157,7 @@ export function EditProfileScreen() {
         .eq('id', user.id);
 
       if (error) throw error;
+
       Alert.alert('Success', 'Profile updated successfully');
       navigation.goBack();
     } catch (error) {
@@ -85,10 +166,6 @@ export function EditProfileScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleUploadImage = async () => {
-    Alert.alert('Coming Soon', 'Image upload functionality will be available soon!');
   };
 
   if (loading && !profile) {
@@ -102,14 +179,14 @@ export function EditProfileScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.profileImageContainer}
-          onPress={handleUploadImage}
+          onPress={handleProfilePicPress}
         >
-          {profile?.avatar_url ? (
-            <Image 
-              source={{ uri: profile.avatar_url }} 
-              style={styles.profileImage} 
+          {avatarUri ? (
+            <Image
+              source={{ uri: avatarUri }}
+              style={styles.profileImage}
             />
           ) : (
             <View style={[styles.profileImage, styles.profileImagePlaceholder]}>
@@ -135,17 +212,6 @@ export function EditProfileScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={[styles.input, styles.disabledInput]}
-            value={profile?.email}
-            editable={false}
-            placeholder="Email"
-            placeholderTextColor="#9CA3AF"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
           <Text style={styles.label}>Phone Number</Text>
           <TextInput
             style={styles.input}
@@ -157,7 +223,7 @@ export function EditProfileScreen() {
           />
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.saveButton}
           onPress={handleUpdateProfile}
           disabled={loading}
@@ -237,10 +303,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#F9FAFB',
     color: '#000',
-  },
-  disabledInput: {
-    backgroundColor: '#F3F4F6',
-    color: '#6B7280',
   },
   saveButton: {
     alignItems: 'center',
