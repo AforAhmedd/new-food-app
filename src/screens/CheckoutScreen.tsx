@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase'; // Import Supabase client
 
 type RootStackParamList = {
   Orders: undefined;
@@ -27,9 +28,29 @@ export function CheckoutScreen() {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
 
-  const handlePlaceOrder = () => {
-    // TODO: Implement order placement logic
-    navigation.navigate('Orders');
+  const handlePlaceOrder = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const orderDetails = {
+        user_id: user.id,
+        address_id: address, // Assuming address is the ID of the address being used
+        total_amount: 23.96, // Replace with actual total amount calculation
+        status: 'PENDING',
+      };
+
+      const { error } = await supabase
+        .from('orders')
+        .insert([orderDetails]);
+
+      if (error) throw error;
+
+      navigation.navigate('Orders');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      // Handle error (e.g., show an alert)
+    }
   };
 
   return (

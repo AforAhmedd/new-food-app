@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 interface Address {
   id: string;
@@ -32,6 +32,8 @@ interface UserProfile {
   avatar_url?: string;
 }
 
+
+
 export function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -39,6 +41,8 @@ export function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
+
+  
   const fetchProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -73,6 +77,13 @@ export function ProfileScreen() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  // Refresh when navigating back to the screen
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -284,6 +295,7 @@ export function ProfileScreen() {
       </TouchableOpacity>
     </ScrollView>
   );
+ 
 }
 
 const styles = StyleSheet.create({

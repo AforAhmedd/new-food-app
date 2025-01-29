@@ -112,7 +112,7 @@ export function CartScreen({ navigation }: { navigation: any }) {
             restaurant_name: order.restaurantName,
             items: order.items,
             total_amount: order.total,
-            status: 'pending',
+            status: 'PENDING',
             address_id: deliveryAddress.id,
             created_at: new Date().toISOString(),
           }]);
