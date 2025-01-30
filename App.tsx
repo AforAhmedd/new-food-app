@@ -18,7 +18,7 @@ import { RestaurantListScreen } from './src/screens/RestaurantListScreen';
 import { RestaurantDetailsScreen } from './src/screens/RestaurantDetailsScreen';
 import { CartScreen } from './src/screens/CartScreen';
 import { EditProfileScreen } from './src/screens/EditUserProfile';
-
+import { AddressScreen } from './src/screens/AddressScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -141,7 +141,25 @@ function NavigationContent() {
               headerBackTitle: 'Back',
             }}
           />
+          <Stack.Screen
+            name="Orders"
+            component={OrdersScreen}
+            options={{
+              title: 'Orders',
+              headerBackTitle: 'Back',
+            }}
+          />
+            <Stack.Screen
+            name="AddAddress"
+            component={AddressScreen}
+            options={{
+              title: 'Address',
+              headerBackTitle: 'Back',
+            }}
+          />
+
         </>
+        
       )}
     </Stack.Navigator>
   );

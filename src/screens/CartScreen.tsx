@@ -12,7 +12,8 @@ import {
 import { useCart } from '../hooks/useCart';
 import { supabase } from '../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
-
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 interface Address {
   id: string;
   address_line1: string;
